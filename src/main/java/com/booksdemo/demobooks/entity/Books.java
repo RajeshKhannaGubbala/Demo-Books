@@ -1,10 +1,10 @@
 package com.booksdemo.demobooks.entity;
 
 
-import javax.annotation.processing.Generated;
 
 
 public class Books {
+
     private long book_Id;
 
     public long getBook_Id() {

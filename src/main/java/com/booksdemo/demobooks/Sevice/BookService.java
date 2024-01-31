@@ -17,8 +17,10 @@ public class BookService {
        list.add(new Books(13,"Maths","sai",232.0));
    }
 public Books addBook(Books book){
-        list.add(book);
-       // list.add(book.setBook_Id(b);)
+        book.setBook_Id(book.getBook_Id()+2);
+
+    list.add(book);
+   // System.out.println(book.getBook_Id());
         return book;
 }
     public Books findBookByName(String bookName) {
