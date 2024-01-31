@@ -1,8 +1,11 @@
 package com.booksdemo.demobooks.route;
 
+import com.booksdemo.demobooks.Exceptions.BookNotFoundException;
 import com.booksdemo.demobooks.Sevice.BookService;
 import com.booksdemo.demobooks.entity.Books;
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,17 +20,22 @@ public class FirstRoute extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-       /* from("timer:simpletimer?period=2000")
-                .transform().constant("Hello word")
-                .to("log:simpletimer");
+        restConfiguration()
+                .component("servlet")
+                .bindingMode(RestBindingMode.json)
+                .enableCORS(true)
+                .dataFormatProperty("prettyPrint", "true");
 
-*/
+        from("rest:get:/getDetails?produces=application/json")
+                .outputType(Books.class)
+                .process(exchange -> {
+                    exchange.getMessage().setBody(bookService.getBookDetails());
+                });
 
-        restConfiguration().component("servlet").port(8080);
 
         rest("/books")
-                .get("/getBookDetails/{bookName}")
-                .to("direct:getBookDetails")
+                .get("/getBookDetail/{bookName}").produces("application/json")
+                .to("direct:getBookDetail")
                 .get("/getAllBooks")
                 .to("direct:getAllBooks")
                 .post("/addBook")
@@ -41,15 +49,21 @@ public class FirstRoute extends RouteBuilder {
                     if (book != null) {
                         exchange.getMessage().setBody(book);
                     } else {
-                        exchange.getMessage().setBody("Book not found for name: " + bookName);
-                    }
-                });
+                        throw new BookNotFoundException("Book not found for name: " + bookName);
 
-        from("direct:getAllBookDetails")
-                .routeId("getAllBookDetails")
+                    }
+                })
+                .onException(BookNotFoundException.class)
+                .handled(true)
+                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+                .setBody(constant("Book not found"))
+                .end();
+
+        from("direct:getAllBooks")
+                .routeId("getAllBooks")
                 .process(exchange -> {
-                    Books book = (Books) bookService.getBookDetails();
-                    exchange.getMessage().setBody(book);
+//                     bookService.getBookDetails();
+                    exchange.getMessage().setBody( bookService.getBookDetails());
                 });
 
         from("direct:addBook")
