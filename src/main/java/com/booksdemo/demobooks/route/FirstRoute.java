@@ -55,14 +55,15 @@ public class FirstRoute extends RouteBuilder {
                 .handled(true)
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
                 .setBody(constant("Book not found"))
-                .end();
+                .end().id("getDetailsOfBook");
 
         from("direct:getAllBooks")
                 .routeId("getAllBooks")
                 .process(exchange -> {
 //                     bookService.getBookDetails();
                     exchange.getMessage().setBody( bookService.getBookDetails());
-                });
+                }).id("getBooks");
+
 
         from("direct:addBook")
                 .routeId("addBook")
@@ -70,7 +71,7 @@ public class FirstRoute extends RouteBuilder {
                     Books newBook = exchange.getIn().getBody(Books.class);
 
                     exchange.getMessage().setBody(bookService.addBook(newBook));
-                });
+                }).id("SaveBook");
         from("direct:getExternalMessage").setHeader(Exchange.HTTP_METHOD,constant("GET")).to("http://localhost:9090/rest/books/getAllBooks?bridgeEndpoint=true")
                 .log("Response from Books: ${body}").unmarshal().json(JsonLibrary.Jackson);;
 
